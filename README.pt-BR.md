@@ -97,12 +97,12 @@ Tudo por variável de ambiente (`exercicio/config.py`) ou flag:
 
 ## Com Docker
 
-O caminho sem Docker, nas seções acima, continua valendo. Com Docker Compose (v2), `docker compose up --build` sobe o Ollama, baixa um modelo pequeno e roda o fluxo com conferência contra o critério.
+O caminho sem Docker, nas seções acima, continua valendo. Com Docker Compose (v2), `docker compose up --build` sobe o Ollama, baixa o modelo padrão `qwen2.5:1.5b` (cerca de 1 GB; troque com a variável `EXERCICIO_LLM_MODELO`) e roda o fluxo com conferência contra o critério.
 
 ```bash
 docker compose up --build
-# na primeira vez: baixa as imagens, o modelo qwen2.5:0.5b (trocável com EXERCICIO_LLM_MODELO)
-# e o modelo de embeddings, no volume hf-cache
+# na primeira vez: baixa as imagens, o modelo qwen2.5:1.5b (cerca de 1 GB;
+# troque com EXERCICIO_LLM_MODELO) e o modelo de embeddings, no volume hf-cache
 # a saída aparece em saida/ no computador
 ```
 
@@ -110,8 +110,8 @@ Para baixar o modelo à mão, ou usar outro (por exemplo `llama3.2:1b`):
 
 ```bash
 docker compose up -d ollama
-docker compose exec ollama ollama pull qwen2.5:0.5b
-docker compose run --rm --no-deps exercicio python -m exercicio rodar --llm ollama --modelo qwen2.5:0.5b --checar
+docker compose exec ollama ollama pull qwen2.5:1.5b
+docker compose run --rm --no-deps exercicio python -m exercicio rodar --llm ollama --modelo qwen2.5:1.5b --checar
 ```
 
 Sem LLM (modo de teste), sem subir o Ollama:

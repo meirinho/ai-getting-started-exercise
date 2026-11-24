@@ -11,12 +11,6 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # qwen2.5:0.5b é o padrão do compose (máquina do aluno, mais leve),
-    # mas um 0.5b costuma parafrasear datas e valores e não se abster com
-    # o texto exato do critério. O critério não foi afrouxado; só o CI
-    # usa um modelo um pouco maior, por EXERCICIO_LLM_MODELO.
-    env:
-      EXERCICIO_LLM_MODELO: qwen2.5:1.5b
     steps:
       - name: Checkout
         uses: actions/checkout@v4

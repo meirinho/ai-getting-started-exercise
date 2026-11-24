@@ -26,9 +26,9 @@ services:
         condition: service_healthy
     environment:
       OLLAMA_HOST: http://ollama:11434
-      EXERCICIO_LLM_MODELO: ${EXERCICIO_LLM_MODELO:-qwen2.5:0.5b}
+      EXERCICIO_LLM_MODELO: ${EXERCICIO_LLM_MODELO:-qwen2.5:1.5b}
     entrypoint: ["ollama", "pull"]
-    command: ["${EXERCICIO_LLM_MODELO:-qwen2.5:0.5b}"]
+    command: ["${EXERCICIO_LLM_MODELO:-qwen2.5:1.5b}"]
     restart: "no"
 
   exercicio:
@@ -41,7 +41,7 @@ services:
     environment:
       OLLAMA_URL: http://ollama:11434
       EXERCICIO_LLM: ${EXERCICIO_LLM:-ollama}
-      EXERCICIO_LLM_MODELO: ${EXERCICIO_LLM_MODELO:-qwen2.5:0.5b}
+      EXERCICIO_LLM_MODELO: ${EXERCICIO_LLM_MODELO:-qwen2.5:1.5b}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       HF_HOME: /root/.cache/huggingface
     volumes:

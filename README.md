@@ -97,12 +97,12 @@ Everything is an environment variable (`exercicio/config.py`) or a flag:
 
 ## With Docker
 
-The path without Docker, in the sections above, still stands. With Docker Compose (v2), `docker compose up --build` starts Ollama, pulls a small model and runs the flow, checking the output against the criterion.
+The path without Docker, in the sections above, still stands. With Docker Compose (v2), `docker compose up --build` starts Ollama, pulls the default `qwen2.5:1.5b` model (about 1 GB; change it with the `EXERCICIO_LLM_MODELO` variable) and runs the flow, checking the output against the criterion.
 
 ```bash
 docker compose up --build
-# first run: pulls the images, the qwen2.5:0.5b model (override with EXERCICIO_LLM_MODELO)
-# and the embedding model, into the hf-cache volume
+# first run: pulls the images, the qwen2.5:1.5b model (about 1 GB;
+# change it with EXERCICIO_LLM_MODELO) and the embedding model, into the hf-cache volume
 # the output appears in saida/ on the host
 ```
 
@@ -110,8 +110,8 @@ To pull the model by hand, or to use another one (for example `llama3.2:1b`):
 
 ```bash
 docker compose up -d ollama
-docker compose exec ollama ollama pull qwen2.5:0.5b
-docker compose run --rm --no-deps exercicio python -m exercicio rodar --llm ollama --modelo qwen2.5:0.5b --checar
+docker compose exec ollama ollama pull qwen2.5:1.5b
+docker compose run --rm --no-deps exercicio python -m exercicio rodar --llm ollama --modelo qwen2.5:1.5b --checar
 ```
 
 With no LLM (test mode), and without starting Ollama:

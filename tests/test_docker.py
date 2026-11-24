@@ -51,7 +51,9 @@ def test_compose_tem_passo_para_baixar_o_modelo():
     assert init["depends_on"]["ollama"]["condition"] == "service_healthy"
     comando = " ".join(str(x) for x in ([init.get("entrypoint")] + [init.get("command")]))
     assert "pull" in comando
-    assert "qwen2.5:0.5b" in str(init.get("command"))
+    assert "qwen2.5:1.5b" in str(init.get("command"))
+    exercicio = dados["services"]["exercicio"]["environment"]
+    assert "qwen2.5:1.5b" in str(exercicio.get("EXERCICIO_LLM_MODELO"))
 
 
 def test_arquivos_docker_nao_trazem_chave():
@@ -78,9 +80,11 @@ def test_workflow_docker_e2e_sem_segredo():
     assert "secrets" not in job
     env = job.get("env") or {}
     assert "OPENROUTER_API_KEY" not in env
+    assert "EXERCICIO_LLM_MODELO" not in env
     texto = caminho.read_text(encoding="utf-8")
     assert "secrets." not in texto
     assert "OPENROUTER_API_KEY" not in texto
+    assert "EXERCICIO_LLM_MODELO" not in texto
     passos = job["steps"]
     usos = [p.get("uses") for p in passos if "uses" in p]
     assert usos == ["actions/checkout@v4"]
