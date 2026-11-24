@@ -1,9 +1,8 @@
-# Caminho com Docker: sobe o Ollama, baixa um modelo pequeno e roda o exercício.
-# O caminho sem Docker (Python no próprio computador) continua valendo; veja o README.
+# Docker path: start Ollama, pull a small model, run the exercise.
+# The native Python path in the README still works without Docker.
 #
-# A chave da OpenRouter, se houver, entra só em OPENROUTER_API_KEY no ambiente
-# ou num arquivo .env local (o git ignora; o .dockerignore também exclui).
-# Nunca coloque valores neste arquivo nem no .env.example.
+# OpenRouter keys belong only in OPENROUTER_API_KEY (environment or local .env).
+# Never commit secrets to this file or .env.example.
 
 services:
   ollama:
@@ -26,12 +25,12 @@ services:
         condition: service_healthy
     environment:
       OLLAMA_HOST: http://ollama:11434
-      EXERCICIO_LLM_MODELO: ${EXERCICIO_LLM_MODELO:-qwen2.5:1.5b}
+      EXERCISE_LLM_MODEL: ${EXERCISE_LLM_MODEL:-qwen2.5:1.5b}
     entrypoint: ["ollama", "pull"]
-    command: ["${EXERCICIO_LLM_MODELO:-qwen2.5:1.5b}"]
+    command: ["${EXERCISE_LLM_MODEL:-qwen2.5:1.5b}"]
     restart: "no"
 
-  exercicio:
+  exercise:
     build: .
     depends_on:
       ollama:
@@ -40,14 +39,14 @@ services:
         condition: service_completed_successfully
     environment:
       OLLAMA_URL: http://ollama:11434
-      EXERCICIO_LLM: ${EXERCICIO_LLM:-ollama}
-      EXERCICIO_LLM_MODELO: ${EXERCICIO_LLM_MODELO:-qwen2.5:1.5b}
+      EXERCISE_LLM: ${EXERCISE_LLM:-ollama}
+      EXERCISE_LLM_MODEL: ${EXERCISE_LLM_MODEL:-qwen2.5:1.5b}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       HF_HOME: /root/.cache/huggingface
     volumes:
       - hf-cache:/root/.cache/huggingface
-      - ./saida:/app/saida
-      - ./indice:/app/indice
+      - ./output:/app/output
+      - ./index:/app/index
     restart: "no"
 
 volumes:

@@ -1,22 +1,22 @@
-from exercicio.pdf import ler_pdf
+from exercise.pdf import read_pdf
 
 
-def test_pdf_tem_frases_ancora(pdf_exemplo):
-    paginas = ler_pdf(pdf_exemplo)
-    assert paginas
-    texto = "\n".join(p.texto for p in paginas)
-    assert "15 de dezembro de 2026" in texto
-    assert "4.800,00" in texto
-    assert "Carla Dias" in texto
-    assert paginas[0].metodo == "pypdf"
-    assert paginas[0].pagina == 1
-    assert paginas[0].fonte == pdf_exemplo.name
+def test_pdf_has_anchor_phrases(pdf_sample):
+    pages = read_pdf(pdf_sample)
+    assert pages
+    text = "\n".join(p.text for p in pages)
+    assert "15 de dezembro de 2026" in text
+    assert "4.800,00" in text
+    assert "Carla Dias" in text
+    assert pages[0].method == "pypdf"
+    assert pages[0].page == 1
+    assert pages[0].source == pdf_sample.name
 
 
-def test_pdf_ausente_fala_o_caminho(tmp_path):
-    from exercicio.pdf import ler_pdf
+def test_missing_pdf_reports_path(tmp_path):
+    from exercise.pdf import read_pdf
     import pytest
 
-    faltando = tmp_path / "nao-existe.pdf"
-    with pytest.raises(FileNotFoundError, match="nao-existe"):
-        ler_pdf(faltando)
+    missing = tmp_path / "missing.pdf"
+    with pytest.raises(FileNotFoundError, match="missing"):
+        read_pdf(missing)

@@ -1,101 +1,99 @@
-"""Conferência estática do Dockerfile e do docker-compose.yml (sem o Docker)."""
+"""Static checks for Dockerfile and docker-compose.yml (no Docker daemon)."""
 from pathlib import Path
 
 import yaml
 
-RAIZ = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_dockerignore_exclui_env():
-    texto = (RAIZ / ".dockerignore").read_text(encoding="utf-8")
-    assert ".env\n" in texto or texto.strip().endswith(".env")
-    assert any(ln.strip() == ".env" for ln in texto.splitlines())
+def test_dockerignore_excludes_env():
+    text = (ROOT / ".dockerignore").read_text(encoding="utf-8")
+    assert ".env\n" in text or text.strip().endswith(".env")
+    assert any(line.strip() == ".env" for line in text.splitlines())
 
 
-def test_env_example_continua_vazio():
-    for linha in (RAIZ / ".env.example").read_text(encoding="utf-8").splitlines():
-        if linha.startswith("OPENROUTER_API_KEY="):
-            assert linha.strip() == "OPENROUTER_API_KEY="
+def test_env_example_stays_empty():
+    for line in (ROOT / ".env.example").read_text(encoding="utf-8").splitlines():
+        if line.startswith("OPENROUTER_API_KEY="):
+            assert line.strip() == "OPENROUTER_API_KEY="
 
 
-def test_dockerfile_instala_requirements_e_roda_o_exercicio():
-    texto = (RAIZ / "Dockerfile").read_text(encoding="utf-8")
-    froms = [ln for ln in texto.splitlines() if ln.startswith("FROM ")]
+def test_dockerfile_installs_requirements_and_runs_exercise():
+    text = (ROOT / "Dockerfile").read_text(encoding="utf-8")
+    froms = [line for line in text.splitlines() if line.startswith("FROM ")]
     assert froms and froms[0].startswith("FROM python:") and "slim" in froms[0]
-    assert "pip install" in texto and "requirements.txt" in texto
-    assert '"python", "-m", "exercicio"' in texto or "python -m exercicio" in texto
-    assert "OPENROUTER_API_KEY=" not in texto or "OPENROUTER_API_KEY=\n" in texto
+    assert "pip install" in text and "requirements.txt" in text
+    assert '"python", "-m", "exercise"' in text or "python -m exercise" in text
+    assert "OPENROUTER_API_KEY=" not in text or "OPENROUTER_API_KEY=\n" in text
 
 
-def test_compose_sobe_ollama_saudavel_e_aponta_o_exercicio():
-    dados = yaml.safe_load((RAIZ / "docker-compose.yml").read_text(encoding="utf-8"))
-    servicos = dados["services"]
-    assert "ollama" in servicos and "exercicio" in servicos
-    ollama = servicos["ollama"]
+def test_compose_starts_healthy_ollama_and_wires_exercise():
+    data = yaml.safe_load((ROOT / "docker-compose.yml").read_text(encoding="utf-8"))
+    services = data["services"]
+    assert "ollama" in services and "exercise" in services
+    ollama = services["ollama"]
     assert "healthcheck" in ollama
     assert any("ollama" in str(v) for v in ollama["volumes"])
-    dep = servicos["exercicio"]["depends_on"]
+    dep = services["exercise"]["depends_on"]
     assert dep["ollama"]["condition"] == "service_healthy"
-    env = servicos["exercicio"]["environment"]
+    env = services["exercise"]["environment"]
     assert env["OLLAMA_URL"] == "http://ollama:11434"
-    # A chave, se existir, só entra por interpolação do ambiente; aqui o valor é vazio.
-    chave = str(env.get("OPENROUTER_API_KEY", ""))
-    assert chave in ("", "${OPENROUTER_API_KEY:-}")
-    volumes = servicos["exercicio"]["volumes"]
+    key = str(env.get("OPENROUTER_API_KEY", ""))
+    assert key in ("", "${OPENROUTER_API_KEY:-}")
+    volumes = services["exercise"]["volumes"]
     assert any("huggingface" in v or "hf-cache" in v for v in volumes)
 
 
-def test_compose_tem_passo_para_baixar_o_modelo():
-    dados = yaml.safe_load((RAIZ / "docker-compose.yml").read_text(encoding="utf-8"))
-    init = dados["services"]["ollama-init"]
+def test_compose_pulls_default_model():
+    data = yaml.safe_load((ROOT / "docker-compose.yml").read_text(encoding="utf-8"))
+    init = data["services"]["ollama-init"]
     assert init["depends_on"]["ollama"]["condition"] == "service_healthy"
-    comando = " ".join(str(x) for x in ([init.get("entrypoint")] + [init.get("command")]))
-    assert "pull" in comando
+    command = " ".join(str(x) for x in ([init.get("entrypoint")] + [init.get("command")]))
+    assert "pull" in command
     assert "qwen2.5:1.5b" in str(init.get("command"))
-    exercicio = dados["services"]["exercicio"]["environment"]
-    assert "qwen2.5:1.5b" in str(exercicio.get("EXERCICIO_LLM_MODELO"))
+    exercise = data["services"]["exercise"]["environment"]
+    assert "qwen2.5:1.5b" in str(exercise.get("EXERCISE_LLM_MODEL"))
 
 
-def test_arquivos_docker_nao_trazem_chave():
-    for nome in ("Dockerfile", "docker-compose.yml", ".dockerignore", ".env.example"):
-        texto = (RAIZ / nome).read_text(encoding="utf-8")
-        for linha in texto.splitlines():
-            m = linha.strip()
-            if m.startswith("OPENROUTER_API_KEY="):
-                assert m == "OPENROUTER_API_KEY=" or m.endswith(":-}") or m.endswith(":-}")
-            assert "sk-" not in linha
+def test_docker_files_do_not_contain_api_keys():
+    for name in ("Dockerfile", "docker-compose.yml", ".dockerignore", ".env.example"):
+        text = (ROOT / name).read_text(encoding="utf-8")
+        for line in text.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("OPENROUTER_API_KEY="):
+                assert stripped == "OPENROUTER_API_KEY=" or stripped.endswith(":-}") or stripped.endswith(":-}")
+            assert "sk-" not in line
 
 
-def test_workflow_docker_e2e_sem_segredo():
-    caminho = RAIZ / ".github" / "workflows" / "docker-e2e.yml"
-    dados = yaml.safe_load(caminho.read_text(encoding="utf-8"))
-    # O PyYAML 1.1 trata a chave "on" como True.
-    gatilhos = dados.get("on") or dados.get(True) or {}
-    assert "pull_request" in gatilhos
-    assert "workflow_dispatch" in gatilhos
-    assert dados.get("permissions", {}).get("contents") == "read"
-    job = dados["jobs"]["e2e"]
+def test_workflow_docker_e2e_has_no_secrets():
+    path = ROOT / ".github" / "workflows" / "docker-e2e.yml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    triggers = data.get("on") or data.get(True) or {}
+    assert "pull_request" in triggers
+    assert "workflow_dispatch" in triggers
+    assert data.get("permissions", {}).get("contents") == "read"
+    job = data["jobs"]["e2e"]
     assert job["runs-on"] == "ubuntu-latest"
     assert job["timeout-minutes"] == 30
     assert "secrets" not in job
     env = job.get("env") or {}
     assert "OPENROUTER_API_KEY" not in env
-    assert "EXERCICIO_LLM_MODELO" not in env
-    texto = caminho.read_text(encoding="utf-8")
-    assert "secrets." not in texto
-    assert "OPENROUTER_API_KEY" not in texto
-    assert "EXERCICIO_LLM_MODELO" not in texto
-    passos = job["steps"]
-    usos = [p.get("uses") for p in passos if "uses" in p]
-    assert usos == ["actions/checkout@v4"]
-    nomes_if = {p["name"]: p.get("if") for p in passos}
-    assert nomes_if.get("Compose logs on failure") == "failure()"
-    assert nomes_if.get("Tear down") == "always()"
-    script = "\n".join(p.get("run") or "" for p in passos)
+    assert "EXERCISE_LLM_MODEL" not in env
+    text = path.read_text(encoding="utf-8")
+    assert "secrets." not in text
+    assert "OPENROUTER_API_KEY" not in text
+    assert "EXERCISE_LLM_MODEL" not in text
+    steps = job["steps"]
+    uses = [step.get("uses") for step in steps if "uses" in step]
+    assert uses == ["actions/checkout@v4"]
+    if_map = {step["name"]: step.get("if") for step in steps}
+    assert if_map.get("Compose logs on failure") == "failure()"
+    assert if_map.get("Tear down") == "always()"
+    script = "\n".join(step.get("run") or "" for step in steps)
     assert "docker compose up -d --build" in script
     assert "docker compose wait ollama-init" in script
-    assert "docker compose run --rm exercicio" in script
-    assert "python -m exercicio checar" in script
-    assert "6 itens conferidos, 6 ok, 0 falhou." in script
+    assert "docker compose run --rm exercise" in script
+    assert "python -m exercise check" in script
+    assert "6 items checked, 6 ok, 0 failed." in script
     assert "docker compose down -v" in script
     assert "docker compose logs" in script

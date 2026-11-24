@@ -1,23 +1,23 @@
 **Idiomas:** [English](README.md) · [Português (Brasil)](README.pt-BR.md) · Español (este archivo)
 
-# ia-como-comecar-exercicio
+# ai-getting-started-exercise
 
 Código de ejemplo de la página «Como começar com IA» (peldaño 1: local, CPU, sin GPU). Convierte una tarea hecha a mano —leer un acta ficticia y responder tres preguntas— en un flujo que corre de principio a fin y contrasta la salida con un criterio escrito antes de ejecutarlo.
 
 ```
 PDF (pypdf) ─> chunks (fuente + página) ─> embeddings (sentence-transformers) ─> Chroma
                                                                       │
-pregunta ─> búsqueda ─> respuesta (Ollama, o extractiva con --modo-teste) ─┴─> saida/resultado.json
+pregunta ─> búsqueda ─> respuesta (Ollama, o extractiva con --test-mode) ─┴─> output/result.json
                                                                                │
-                                                          python -m exercicio checar
-                                                          python -m exercicio publicar  ─> docs/ (GitHub Pages, opcional)
+                                                          python -m exercise check
+                                                          python -m exercise publish  ─> docs/ (GitHub Pages, opcional)
 ```
 
 ## Qué necesitas
 
 - Linux, macOS o Windows, con Python 3.11 o más nuevo (probado con Python 3.13 en Linux, CPU, sin GPU).
 - Camino predeterminado, local y gratuito: Python, Ollama, pypdf, sentence-transformers y Chroma.
-- Opcionales: OpenRouter (un LLM por la red, con tu clave en una variable de entorno), GitHub Pages (para publicar la salida) y Docker Compose (para levantar Ollama y el ejercicio juntos).
+- Opcionales: OpenRouter (un LLM por la red, con tu clave en una variable de entorno), GitHub Pages (parapublish la salida) y Docker Compose (para levantar Ollama y el ejercicio juntos).
 - Internet solo para descargar el modelo de embeddings de Hugging Face, la primera vez; después el camino local corre sin red. `--embeddings fake` no descarga ningún modelo.
 - Sin clave de API en el camino predeterminado. Si usas OpenRouter, la clave entra solo en `OPENROUTER_API_KEY` (el terminal o un archivo `.env`, que git ignora). Nunca en el código.
 
@@ -25,7 +25,7 @@ Modelo de embeddings (se descarga cuando corres el código en modo `e5`, en `~/.
 
 | Papel | Modelo | Dónde cambiarlo |
 |---|---|---|
-| Embeddings | `intfloat/multilingual-e5-small` | `EXERCICIO_MODELO_EMBEDDINGS` |
+| Embeddings | `intfloat/multilingual-e5-small` | `EXERCISE_MODELO_EMBEDDINGS` |
 
 ## Instalación
 
@@ -39,71 +39,71 @@ En el camino con Ollama, instala [Ollama](https://ollama.com), arranca el servic
 
 ## Cómo ejecutarlo
 
-El criterio de conclusión está en `CRITERIO.md` y en `criterio.yaml`, escritos **antes** del flujo. La entrada es el PDF ficticio `dados/ata-reuniao-ficticia.pdf`.
+El criterio de conclusión está en `CRITERIA.md` y en `criteria.yaml`, escritos **antes** del flujo. La entrada es el PDF ficticio `data/fictional-meeting-minutes.pdf`.
 
 ```bash
-# documento ficticio (ya está en dados/; el script recrea el PDF)
-python -m exercicio gerar-pdf
+# documento ficticio (ya está en data/; el script recrea el PDF)
+python -m exercise generate-pdf
 
 # modo de prueba determinista (sin Ollama y sin OpenRouter):
 # respuesta extractiva a partir de los pasajes recuperados
-python -m exercicio rodar --modo-teste --checar
+python -m exercise run --test-mode --check
 
 # camino predeterminado, con Ollama local (falla con un mensaje claro si Ollama no está en marcha)
-python -m exercicio rodar --llm ollama --modelo llama3.2 --checar
+python -m exercise run --llm ollama --model llama3.2 --check
 
 # opción por OpenRouter (la clave sale solo de OPENROUTER_API_KEY)
 # Pega tu clave en el terminal, no en un archivo versionado.
 export OPENROUTER_API_KEY=
-python -m exercicio rodar --llm openrouter --modelo TU_MODELO --checar
+python -m exercise run --llm openrouter --model TU_MODELO --check
 
 # comprobación aparte, si la salida ya existe
-python -m exercicio checar
+python -m exercise check
 
 # paso opcional: genera docs/index.html a partir de la salida, para GitHub Pages
-python -m exercicio publicar
+python -m exercise publish
 ```
 
-`--modo-teste` es el modo documentado cuando Ollama no está instalado: la respuesta es extractiva y determinista (copia el pasaje más parecido y cita el archivo y la página; si el texto no trae la respuesta, se abstiene). Las pruebas de pytest usan este modo y embeddings `fake`, sin red y sin descarga.
+`--test-mode` es el modo documentado cuando Ollama no está instalado: la respuesta es extractiva y determinista (copia el pasaje más parecido y cita el archivo y la página; si el texto no trae la respuesta, se abstiene). Las pruebas de pytest usan este modo y embeddings `fake`, sin red y sin descarga.
 
 `--embeddings e5` (el predeterminado) usa `intfloat/multilingual-e5-small`. `--embeddings fake` usa vectores deterministas, para las pruebas o para una máquina sin el modelo en caché.
 
 ### Los siete pasos del ejercicio
 
 1. Elegir una tarea limitada y una entrada sin información sensible (aquí, el acta ficticia).
-2. Escribir la salida esperada y el criterio de conclusión **antes** de elegir herramienta (`CRITERIO.md`).
+2. Escribir la salida esperada y el criterio de conclusión **antes** de elegir herramienta (`CRITERIA.md`).
 3. Separar lo que es regla (leer el PDF, cortar, guardar la salida, comprobarla) de lo que pide interpretación (la respuesta en lenguaje natural, cuando hay un LLM).
 4. Armar el camino con la entrada local y ver el resultado en el terminal (y, si quieres, en `docs/index.html`). El camino predeterminado no envía nada fuera de la máquina.
-5. Ejecutar el caso conocido y comprobarlo contra el criterio: `python -m exercicio checar`.
+5. Ejecutar el caso conocido y comprobarlo contra el criterio: `python -m exercise check`.
 6. La pregunta fuera del documento («Qual é a taxa de juros do financiamento imobiliário?») es el caso que debería fallar si el flujo inventa la respuesta; lo correcto es abstenerse.
-7. Decidir el siguiente ajuste: otro modelo, el modo OpenRouter, o publicar la salida en GitHub Pages.
+7. Decidir el siguiente ajuste: otro modelo, el modo OpenRouter, opublish la salida en GitHub Pages.
 
 ### Configuración
 
-Todo va por variable de entorno (`exercicio/config.py`) o por flag:
+Todo va por variable de entorno (`exercise/config.py`) o por flag:
 
-- `EXERCICIO_LLM` — `ollama` (predeterminado), `openrouter` o `teste` (lo mismo que `--llm` / `--modo-teste`).
-- `EXERCICIO_LLM_MODELO` — el nombre en Ollama o el id en OpenRouter (`--modelo`).
+- `EXERCISE_LLM` — `ollama` (predeterminado), `openrouter` o `teste` (lo mismo que `--llm` / `--test-mode`).
+- `EXERCISE_LLM_MODELO` — el nombre en Ollama o el id en OpenRouter (`--model`).
 - `OLLAMA_URL` — predeterminado `http://localhost:11434`.
 - `OPENROUTER_API_KEY` — solo en el entorno, nunca en un archivo versionado. `.env.example` trae la variable vacía; cópiala a `.env` si quieres.
-- `EXERCICIO_MODELO_EMBEDDINGS`, `EXERCICIO_EMBEDDINGS` (`e5` o `fake`), `EXERCICIO_INDICE`, `EXERCICIO_SAIDA`.
+- `EXERCISE_MODELO_EMBEDDINGS`, `EXERCISE_EMBEDDINGS` (`e5` o `fake`), `EXERCISE_INDICE`, `EXERCISE_SAIDA`.
 
 ### Publicar la salida en GitHub Pages (opcional)
 
-1. Ejecuta el flujo y después `python -m exercicio publicar`. Esto (re)escribe `docs/index.html`.
+1. Ejecuta el flujo y después `python -m exercise publish`. Esto (re)escribe `docs/index.html`.
 2. En GitHub, en Settings → Pages, elige GitHub Actions como fuente.
 3. Ejecuta el workflow `Deploy GitHub Pages` a mano (Actions → el workflow → Run workflow). Está en `.github/workflows/pages.yml` y solo se dispara por `workflow_dispatch`: no publica nada en un push ni en un pull request.
 
 
 ## Con Docker
 
-El camino sin Docker, en las secciones de arriba, sigue valiendo. Con Docker Compose (v2), `docker compose up --build` levanta Ollama, descarga el modelo predeterminado `qwen2.5:1.5b` (unos 1 GB; cámbialo con la variable `EXERCICIO_LLM_MODELO`) y corre el flujo, comprobando la salida contra el criterio.
+El camino sin Docker, en las secciones de arriba, sigue valiendo. Con Docker Compose (v2), `docker compose up --build` levanta Ollama, descarga el modelo predeterminado `qwen2.5:1.5b` (unos 1 GB; cámbialo con la variable `EXERCISE_LLM_MODELO`) y corre el flujo, comprobando la salida contra el criterio.
 
 ```bash
 docker compose up --build
 # la primera vez: descarga las imágenes, el modelo qwen2.5:1.5b (unos 1 GB;
-# se cambia con EXERCICIO_LLM_MODELO) y el modelo de embeddings, en el volumen hf-cache
-# la salida aparece en saida/ en el equipo
+# se cambia con EXERCISE_LLM_MODELO) y el modelo de embeddings, en el volumen hf-cache
+# la salida aparece en output/ en el equipo
 ```
 
 Para descargar el modelo a mano, o usar otro (por ejemplo `llama3.2:1b`):
@@ -111,14 +111,14 @@ Para descargar el modelo a mano, o usar otro (por ejemplo `llama3.2:1b`):
 ```bash
 docker compose up -d ollama
 docker compose exec ollama ollama pull qwen2.5:1.5b
-docker compose run --rm --no-deps exercicio python -m exercicio rodar --llm ollama --modelo qwen2.5:1.5b --checar
+docker compose run --rm --no-deps exercise python -m exercise run --llm ollama --model qwen2.5:1.5b --check
 ```
 
 Sin LLM (modo de prueba), sin levantar Ollama:
 
 ```bash
-docker compose run --rm --no-deps exercicio python -m exercicio rodar --modo-teste --checar
-docker compose run --rm --no-deps exercicio pytest -q
+docker compose run --rm --no-deps exercise python -m exercise run --test-mode --check
+docker compose run --rm --no-deps exercise pytest -q
 ```
 
 La clave de OpenRouter, si usas esa opción, entra solo en `OPENROUTER_API_KEY` en el entorno o en un `.env` local (git lo ignora; el `.dockerignore` también lo deja fuera de la imagen). `.env.example` se queda vacío. No pongas la clave en `docker-compose.yml`.
@@ -129,27 +129,27 @@ La clave de OpenRouter, si usas esa opción, entra solo en `OPENROUTER_API_KEY` 
 pytest -q
 ```
 
-Las pruebas generan el PDF en una carpeta temporal, corren el flujo con `--modo-teste` y embeddings `fake`, comprueban el criterio, simulan OpenRouter con un mock (sin red) y verifican que la clave no entre en ningún archivo. No dependen de Ollama ni de la descarga de un modelo.
+Las pruebas generan el PDF en una carpeta temporal, corren el flujo con `--test-mode` y embeddings `fake`, comprueban el criterio, simulan OpenRouter con un mock (sin red) y verifican que la clave no entre en ningún archivo. No dependen de Ollama ni de la descarga de un modelo.
 
 ## Estructura
 
 ```
-exercicio/
+exercise/
   pdf.py             lectura del PDF con pypdf, texto por página
   chunks.py          corte con fuente y página, sin cruzar páginas
   embeddings.py      sentence-transformers (e5) o vectores fake
   banco.py           Chroma persistido en disco
   responder.py       respuesta extractiva, Ollama o OpenRouter
   pipeline.py        flujo de principio a fin
-  checar.py          comprobación contra criterio.yaml
-  publicar.py        genera docs/index.html a partir de la salida
+ check.py          comprobación contra criteria.yaml
+ publish.py        genera docs/index.html a partir de la salida
   gerar_pdf.py       regenera el PDF ficticio
-  cli.py             python -m exercicio ...
-CRITERIO.md          criterio de conclusión, escrito antes de ejecutar
-criterio.yaml        el mismo criterio, leído por la comprobación
-dados/               PDF ficticio (CC BY 4.0)
+  cli.py             python -m exercise ...
+CRITERIA.md          criterio de conclusión, escrito antes de ejecutar
+criteria.yaml        el mismo criterio, leído por la comprobación
+data/               PDF ficticio (CC BY 4.0)
 docs/                HTML generado para GitHub Pages
-indice/, saida/      índice de Chroma y salidas (fuera de git)
+index/, output/      índice de Chroma y salidas (fuera de git)
 .github/workflows/   pages.yml (solo workflow_dispatch)
 Dockerfile           imagen Python slim del ejercicio
 docker-compose.yml   Ollama, la descarga del modelo y el ejercicio
@@ -159,9 +159,9 @@ tests/               pytest
 
 ## Límites y errores comunes
 
-- En el camino predeterminado, si Ollama no está en marcha, el flujo termina con el código 2 y un mensaje que pide Ollama, `--modo-teste` o OpenRouter. No cambia de backend en silencio.
-- La respuesta extractiva de `--modo-teste` solo copia un pasaje del documento: si el pasaje correcto no queda arriba en la búsqueda, la respuesta falla aunque ese pasaje esté en la lista.
-- Un PDF con tabla o dos columnas puede salir desordenado en pypdf; revisa `saida/texto-extraido.txt` antes de confiar en la respuesta.
+- En el camino predeterminado, si Ollama no está en marcha, el flujo termina con el código 2 y un mensaje que pide Ollama, `--test-mode` o OpenRouter. No cambia de backend en silencio.
+- La respuesta extractiva de `--test-mode` solo copia un pasaje del documento: si el pasaje correcto no queda arriba en la búsqueda, la respuesta falla aunque ese pasaje esté en la lista.
+- Un PDF con tabla o dos columnas puede salir desordenado en pypdf; revisa `output/texto-extraido.txt` antes de confiar en la respuesta.
 - Los chunks no cruzan páginas, para que la cita siga siendo correcta.
 - La clave de OpenRouter nunca debe ir al git. Si pegas la clave en un archivo, usa solo `.env` (ignorado). `.env.example` se queda vacío.
 - Queda fuera de esta versión: OCR, crawling, reranking y una pantalla interactiva (eso está en el repositorio `ia-faca-voce-mesmo-rag`).
@@ -175,7 +175,7 @@ tests/               pytest
 
 ## Licencia y atribución
 
-Código bajo la licencia MIT (`LICENSE`). El documento ficticio de `dados/` bajo CC BY 4.0 (`dados/LICENSE.md`). Los modelos descargados tienen las licencias de sus páginas en Hugging Face.
+Código bajo la licencia MIT (`LICENSE`). El documento ficticio de `data/` bajo CC BY 4.0 (`data/LICENSE.md`). Los modelos descargados tienen las licencias de sus páginas en Hugging Face.
 
 ## Limitaciones de esta versión
 

@@ -1,5 +1,4 @@
-# Imagem do exercício: Python slim, dependências do requirements.txt.
-# O Ollama fica num serviço à parte (veja docker-compose.yml).
+# Exercise image: Python slim + requirements.txt. Ollama runs as a sidecar (see docker-compose.yml).
 FROM python:3.13-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -8,12 +7,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     ANONYMIZED_TELEMETRY=False \
     TOKENIZERS_PARALLELISM=false \
     HF_HOME=/root/.cache/huggingface \
-    EXERCICIO_LLM=ollama
+    EXERCISE_LLM=ollama
 
 WORKDIR /app
 
-# libgomp: usado pelo onnxruntime (dependência do Chroma) nesta imagem slim.
-# A versão acompanha o repositório da imagem slim; não fixamos o pacote aqui.
+# libgomp: onnxruntime (Chroma dependency) on slim images.
 # hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libgomp1 \
@@ -24,6 +22,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Padrão: rodar o fluxo com o Ollama do compose e conferir o critério.
-# Sobrescreva o comando para --modo-teste, pytest, checar ou publicar.
-CMD ["python", "-m", "exercicio", "rodar", "--llm", "ollama", "--checar"]
+# Default: run the flow against Compose Ollama and check criteria.
+# Override for --test-mode, pytest, check, or publish.
+CMD ["python", "-m", "exercise", "run", "--llm", "ollama", "--check"]

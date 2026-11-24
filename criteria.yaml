@@ -1,0 +1,35 @@
+# Written before running the flow. Checks read this file, not the other way around.
+description: >
+  Verify fictional meeting output against the completion criterion in
+  CRITERIA.md, written before the pipeline runs.
+input: data/fictional-meeting-minutes.pdf
+output: output/result.json
+anchor_phrases:
+  - "15 de dezembro de 2026"
+  - "4.800,00"
+  - "Carla Dias"
+abstention_message: "Os documentos não trazem essa informação."
+questions:
+  - id: next_meeting
+    question: Quando é a próxima reunião?
+    must_contain:
+      - "15 de dezembro de 2026"
+    abstain: false
+    cite: true
+  - id: budget
+    question: Qual foi o orçamento aprovado?
+    must_contain:
+      - "4.800,00"
+    abstain: false
+    cite: true
+  - id: responsible
+    question: Quem é a responsável pelo relatório de novembro?
+    must_contain:
+      - "Carla Dias"
+    abstain: false
+    cite: true
+  - id: off_topic_question
+    question: Qual é a taxa de juros do financiamento imobiliário?
+    must_contain: []
+    abstain: true
+    cite: false

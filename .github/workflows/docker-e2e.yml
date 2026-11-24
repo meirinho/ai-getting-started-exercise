@@ -22,20 +22,20 @@ jobs:
         run: |
           set -euo pipefail
           if docker compose wait --help >/dev/null 2>&1; then
-            echo "usando docker compose wait ollama-init"
+            echo "using docker compose wait ollama-init"
             docker compose wait ollama-init
           else
-            echo "docker compose wait indisponível; usando loop"
-            limite=90
+            echo "docker compose wait unavailable; using loop"
+            limit=90
             i=1
-            while [ "$i" -le "$limite" ]; do
-              estado=$(docker compose ps -a --format '{{.State}}' ollama-init 2>/dev/null | tail -n 1 || true)
-              echo "ollama-init estado=${estado:-desconhecido} ($i/$limite)"
-              case "$estado" in
+            while [ "$i" -le "$limit" ]; do
+              state=$(docker compose ps -a --format '{{.State}}' ollama-init 2>/dev/null | tail -n 1 || true)
+              echo "ollama-init state=${state:-unknown} ($i/$limit)"
+              case "$state" in
                 exited|stopped|dead) break ;;
               esac
-              if [ "$i" -eq "$limite" ]; then
-                echo "timeout esperando o ollama-init"
+              if [ "$i" -eq "$limit" ]; then
+                echo "timeout waiting for ollama-init"
                 docker compose ps -a
                 exit 1
               fi
@@ -45,26 +45,26 @@ jobs:
           fi
           id=$(docker compose ps -aq ollama-init | tail -n 1)
           if [ -z "$id" ]; then
-            echo "não achei o container do ollama-init"
+            echo "ollama-init container not found"
             docker compose ps -a
             exit 1
           fi
-          codigo=$(docker inspect --format '{{.State.ExitCode}}' "$id")
-          echo "ollama-init exit=$codigo"
-          if [ "$codigo" != "0" ]; then
-            echo "o pull do modelo falhou"
+          code=$(docker inspect --format '{{.State.ExitCode}}' "$id")
+          echo "ollama-init exit=$code"
+          if [ "$code" != "0" ]; then
+            echo "model pull failed"
             exit 1
           fi
 
       - name: Run the exercise with Ollama
-        run: docker compose run --rm exercicio python -m exercicio rodar --llm ollama --checar
+        run: docker compose run --rm exercise python -m exercise run --llm ollama --check
 
       - name: Check output against the written criterion
         run: |
           set -euo pipefail
-          docker compose run --rm --no-deps exercicio python -m exercicio checar | tee checar-saida.txt
-          if ! grep -F "6 itens conferidos, 6 ok, 0 falhou." checar-saida.txt; then
-            echo "A conferência não deu 6 de 6."
+          docker compose run --rm --no-deps exercise python -m exercise check | tee check-output.txt
+          if ! grep -F "6 items checked, 6 ok, 0 failed." check-output.txt; then
+            echo "Criterion check did not report 6 of 6."
             exit 1
           fi
 

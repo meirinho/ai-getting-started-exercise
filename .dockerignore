@@ -8,7 +8,7 @@ __pycache__/
 *.pyc
 *.egg-info/
 .pytest_cache/
-indice/
-saida/
+index/
+output/
 docs/index.html
 *.bundle
