@@ -1,0 +1,55 @@
+# Caminho com Docker: sobe o Ollama, baixa um modelo pequeno e roda o exercício.
+# O caminho sem Docker (Python no próprio computador) continua valendo; veja o README.
+#
+# A chave da OpenRouter, se houver, entra só em OPENROUTER_API_KEY no ambiente
+# ou num arquivo .env local (o git ignora; o .dockerignore também exclui).
+# Nunca coloque valores neste arquivo nem no .env.example.
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama-models:/root/.ollama
+    ports:
+      - "11434:11434"
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  ollama-init:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      EXERCICIO_LLM_MODELO: ${EXERCICIO_LLM_MODELO:-qwen2.5:0.5b}
+    entrypoint: ["ollama", "pull"]
+    command: ["${EXERCICIO_LLM_MODELO:-qwen2.5:0.5b}"]
+    restart: "no"
+
+  exercicio:
+    build: .
+    depends_on:
+      ollama:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+    environment:
+      OLLAMA_URL: http://ollama:11434
+      EXERCICIO_LLM: ${EXERCICIO_LLM:-ollama}
+      EXERCICIO_LLM_MODELO: ${EXERCICIO_LLM_MODELO:-qwen2.5:0.5b}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      HF_HOME: /root/.cache/huggingface
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+      - ./saida:/app/saida
+      - ./indice:/app/indice
+    restart: "no"
+
+volumes:
+  ollama-models:
+  hf-cache:

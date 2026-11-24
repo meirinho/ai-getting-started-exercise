@@ -17,7 +17,7 @@ question ─> search ─> answer (Ollama, or extractive with --modo-teste) ─�
 
 - Linux, macOS or Windows, with Python 3.11 or newer (tested with Python 3.13 on Linux, CPU, no GPU).
 - Default path, local and free of charge: Python, Ollama, pypdf, sentence-transformers and Chroma.
-- Optional: OpenRouter (an LLM over the network, with your key in an environment variable) and GitHub Pages (to publish the output).
+- Optional: OpenRouter (an LLM over the network, with your key in an environment variable), GitHub Pages (to publish the output) and Docker Compose (to bring up Ollama and the exercise together).
 - Internet only to download the embedding model from Hugging Face, the first time; after that the local path runs offline. `--embeddings fake` does not download a model.
 - No API key on the default path. If you use OpenRouter, the key belongs only in `OPENROUTER_API_KEY` (the terminal or a `.env` file, which git ignores). Never in the code.
 
@@ -94,6 +94,35 @@ Everything is an environment variable (`exercicio/config.py`) or a flag:
 2. On GitHub, under Settings → Pages, choose GitHub Actions as the source.
 3. Run the `Deploy GitHub Pages` workflow by hand (Actions → the workflow → Run workflow). It lives in `.github/workflows/pages.yml` and is triggered only by `workflow_dispatch`: nothing is published on push or on a pull request.
 
+
+## With Docker
+
+The path without Docker, in the sections above, still stands. With Docker Compose (v2), `docker compose up --build` starts Ollama, pulls a small model and runs the flow, checking the output against the criterion.
+
+```bash
+docker compose up --build
+# first run: pulls the images, the qwen2.5:0.5b model (override with EXERCICIO_LLM_MODELO)
+# and the embedding model, into the hf-cache volume
+# the output appears in saida/ on the host
+```
+
+To pull the model by hand, or to use another one (for example `llama3.2:1b`):
+
+```bash
+docker compose up -d ollama
+docker compose exec ollama ollama pull qwen2.5:0.5b
+docker compose run --rm --no-deps exercicio python -m exercicio rodar --llm ollama --modelo qwen2.5:0.5b --checar
+```
+
+With no LLM (test mode), and without starting Ollama:
+
+```bash
+docker compose run --rm --no-deps exercicio python -m exercicio rodar --modo-teste --checar
+docker compose run --rm --no-deps exercicio pytest -q
+```
+
+If you use OpenRouter, the key belongs only in `OPENROUTER_API_KEY` in the environment or in a local `.env` file (git ignores it; `.dockerignore` also keeps it out of the image). `.env.example` stays empty. Do not put the key in `docker-compose.yml`.
+
 ## Tests
 
 ```bash
@@ -122,6 +151,9 @@ dados/               fictional PDF (CC BY 4.0)
 docs/                HTML built for GitHub Pages
 indice/, saida/      Chroma index and outputs (not in git)
 .github/workflows/   pages.yml (workflow_dispatch only)
+Dockerfile           slim Python image for the exercise
+docker-compose.yml   Ollama, the model pull and the exercise
+.dockerignore        excludes .env, .venv, the index and the output
 tests/               pytest
 ```
 
@@ -133,6 +165,7 @@ tests/               pytest
 - Chunks never cross pages, so the citation stays correct.
 - The OpenRouter key must never go into git. If you paste the key into a file, use only `.env` (ignored). `.env.example` stays empty.
 - Left out of this version: OCR, crawling, reranking and an interactive screen (those are in the `ia-faca-voce-mesmo-rag` repository).
+- The first Docker run pulls the images, the Ollama model and, in `e5` mode, the embedding model; it needs a network connection and disk space.
 
 ## Stages
 

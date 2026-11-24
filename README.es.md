@@ -17,7 +17,7 @@ pregunta ─> búsqueda ─> respuesta (Ollama, o extractiva con --modo-teste) �
 
 - Linux, macOS o Windows, con Python 3.11 o más nuevo (probado con Python 3.13 en Linux, CPU, sin GPU).
 - Camino predeterminado, local y gratuito: Python, Ollama, pypdf, sentence-transformers y Chroma.
-- Opcionales: OpenRouter (un LLM por la red, con tu clave en una variable de entorno) y GitHub Pages (para publicar la salida).
+- Opcionales: OpenRouter (un LLM por la red, con tu clave en una variable de entorno), GitHub Pages (para publicar la salida) y Docker Compose (para levantar Ollama y el ejercicio juntos).
 - Internet solo para descargar el modelo de embeddings de Hugging Face, la primera vez; después el camino local corre sin red. `--embeddings fake` no descarga ningún modelo.
 - Sin clave de API en el camino predeterminado. Si usas OpenRouter, la clave entra solo en `OPENROUTER_API_KEY` (el terminal o un archivo `.env`, que git ignora). Nunca en el código.
 
@@ -94,6 +94,35 @@ Todo va por variable de entorno (`exercicio/config.py`) o por flag:
 2. En GitHub, en Settings → Pages, elige GitHub Actions como fuente.
 3. Ejecuta el workflow `Deploy GitHub Pages` a mano (Actions → el workflow → Run workflow). Está en `.github/workflows/pages.yml` y solo se dispara por `workflow_dispatch`: no publica nada en un push ni en un pull request.
 
+
+## Con Docker
+
+El camino sin Docker, en las secciones de arriba, sigue valiendo. Con Docker Compose (v2), `docker compose up --build` levanta Ollama, descarga un modelo pequeño y corre el flujo, comprobando la salida contra el criterio.
+
+```bash
+docker compose up --build
+# la primera vez: descarga las imágenes, el modelo qwen2.5:0.5b (se cambia con EXERCICIO_LLM_MODELO)
+# y el modelo de embeddings, en el volumen hf-cache
+# la salida aparece en saida/ en el equipo
+```
+
+Para descargar el modelo a mano, o usar otro (por ejemplo `llama3.2:1b`):
+
+```bash
+docker compose up -d ollama
+docker compose exec ollama ollama pull qwen2.5:0.5b
+docker compose run --rm --no-deps exercicio python -m exercicio rodar --llm ollama --modelo qwen2.5:0.5b --checar
+```
+
+Sin LLM (modo de prueba), sin levantar Ollama:
+
+```bash
+docker compose run --rm --no-deps exercicio python -m exercicio rodar --modo-teste --checar
+docker compose run --rm --no-deps exercicio pytest -q
+```
+
+La clave de OpenRouter, si usas esa opción, entra solo en `OPENROUTER_API_KEY` en el entorno o en un `.env` local (git lo ignora; el `.dockerignore` también lo deja fuera de la imagen). `.env.example` se queda vacío. No pongas la clave en `docker-compose.yml`.
+
 ## Pruebas
 
 ```bash
@@ -122,6 +151,9 @@ dados/               PDF ficticio (CC BY 4.0)
 docs/                HTML generado para GitHub Pages
 indice/, saida/      índice de Chroma y salidas (fuera de git)
 .github/workflows/   pages.yml (solo workflow_dispatch)
+Dockerfile           imagen Python slim del ejercicio
+docker-compose.yml   Ollama, la descarga del modelo y el ejercicio
+.dockerignore        excluye .env, .venv, el índice y la salida
 tests/               pytest
 ```
 
@@ -133,6 +165,7 @@ tests/               pytest
 - Los chunks no cruzan páginas, para que la cita siga siendo correcta.
 - La clave de OpenRouter nunca debe ir al git. Si pegas la clave en un archivo, usa solo `.env` (ignorado). `.env.example` se queda vacío.
 - Queda fuera de esta versión: OCR, crawling, reranking y una pantalla interactiva (eso está en el repositorio `ia-faca-voce-mesmo-rag`).
+- La primera ejecución con Docker descarga las imágenes, el modelo de Ollama y, en el modo `e5`, el modelo de embeddings; hace falta red y espacio en disco.
 
 ## Peldaños
 
