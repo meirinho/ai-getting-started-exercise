@@ -62,3 +62,36 @@ def test_arquivos_docker_nao_trazem_chave():
             if m.startswith("OPENROUTER_API_KEY="):
                 assert m == "OPENROUTER_API_KEY=" or m.endswith(":-}") or m.endswith(":-}")
             assert "sk-" not in linha
+
+
+def test_workflow_docker_e2e_sem_segredo():
+    caminho = RAIZ / ".github" / "workflows" / "docker-e2e.yml"
+    dados = yaml.safe_load(caminho.read_text(encoding="utf-8"))
+    # O PyYAML 1.1 trata a chave "on" como True.
+    gatilhos = dados.get("on") or dados.get(True) or {}
+    assert "pull_request" in gatilhos
+    assert "workflow_dispatch" in gatilhos
+    assert dados.get("permissions", {}).get("contents") == "read"
+    job = dados["jobs"]["e2e"]
+    assert job["runs-on"] == "ubuntu-latest"
+    assert job["timeout-minutes"] == 30
+    assert "secrets" not in job
+    env = job.get("env") or {}
+    assert "OPENROUTER_API_KEY" not in env
+    texto = caminho.read_text(encoding="utf-8")
+    assert "secrets." not in texto
+    assert "OPENROUTER_API_KEY" not in texto
+    passos = job["steps"]
+    usos = [p.get("uses") for p in passos if "uses" in p]
+    assert usos == ["actions/checkout@v4"]
+    nomes_if = {p["name"]: p.get("if") for p in passos}
+    assert nomes_if.get("Compose logs on failure") == "failure()"
+    assert nomes_if.get("Tear down") == "always()"
+    script = "\n".join(p.get("run") or "" for p in passos)
+    assert "docker compose up -d --build" in script
+    assert "docker compose wait ollama-init" in script
+    assert "docker compose run --rm exercicio" in script
+    assert "python -m exercicio checar" in script
+    assert "6 itens conferidos, 6 ok, 0 falhou." in script
+    assert "docker compose down -v" in script
+    assert "docker compose logs" in script
