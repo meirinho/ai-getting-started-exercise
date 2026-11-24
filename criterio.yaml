@@ -1,0 +1,35 @@
+# Escrito antes de rodar o fluxo. A checagem lê este arquivo, não o contrário.
+descricao: >
+  Conferência da saída da ata fictícia contra o critério de conclusão
+  escrito em CRITERIO.md, antes de o fluxo rodar.
+entrada: dados/ata-reuniao-ficticia.pdf
+saida: saida/resultado.json
+frases_ancora:
+  - "15 de dezembro de 2026"
+  - "4.800,00"
+  - "Carla Dias"
+mensagem_abstencao: "Os documentos não trazem essa informação."
+perguntas:
+  - id: proxima_reuniao
+    pergunta: Quando é a próxima reunião?
+    deve_conter:
+      - "15 de dezembro de 2026"
+    abstencao: false
+    citar: true
+  - id: orcamento
+    pergunta: Qual foi o orçamento aprovado?
+    deve_conter:
+      - "4.800,00"
+    abstencao: false
+    citar: true
+  - id: responsavel
+    pergunta: Quem é a responsável pelo relatório de novembro?
+    deve_conter:
+      - "Carla Dias"
+    abstencao: false
+    citar: true
+  - id: pergunta_fora
+    pergunta: Qual é a taxa de juros do financiamento imobiliário?
+    deve_conter: []
+    abstencao: true
+    citar: false
