@@ -1,6 +1,6 @@
 **Languages:** English (this file) · [Português (Brasil)](README.pt-BR.md) · [Español](README.es.md)
 
-# ai-getting-started-exercise
+# AI Getting Started Exercise
 
 Example code for the “Como começar com IA” page (stage 1: local, CPU, no GPU). It takes a task you would do by hand — read a fictional meeting record and answer three questions — and turns it into a flow that runs end to end and checks the output against a criterion written before you run it.
 
