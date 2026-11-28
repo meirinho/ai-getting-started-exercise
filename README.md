@@ -1,4 +1,4 @@
-**Languages:** English (this file) · [Português (Brasil)](README.pt-BR.md) · [Español](README.es.md)
+**Languages:** Educational English (this file) · [Português (Brasil)](README.pt-BR.md) · [Español](README.es.md)
 
 # AI Getting Started Exercise
 
